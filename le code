@@ -1,0 +1,98 @@
+#region VEXcode Generated Robot Configuration
+from vex import *
+import urandom
+
+# Brain should be defined by default
+brain=Brain()
+
+# Robot configuration code
+motor_1 = Motor(Ports.PORT1, GearSetting.RATIO_36_1, False)
+motor_2 = Motor(Ports.PORT2, GearSetting.RATIO_36_1, True)
+limit_switch_a = Limit(brain.three_wire_port.a)
+bumper_b = Bumper(brain.three_wire_port.b)
+bumper_c = Bumper(brain.three_wire_port.c)
+
+
+# wait for rotation sensor to fully initialize
+wait(30, MSEC)
+
+
+# Make random actually random
+def initializeRandomSeed():
+    wait(100, MSEC)
+    random = brain.battery.voltage(MV) + brain.battery.current(CurrentUnits.AMP) * 100 + brain.timer.system_high_res()
+    urandom.seed(int(random))
+      
+# Set random seed 
+initializeRandomSeed()
+
+
+def play_vexcode_sound(sound_name):
+    # Helper to make playing sounds from the V5 in VEXcode easier and
+    # keeps the code cleaner by making it clear what is happening.
+    print("VEXPlaySound:" + sound_name)
+    wait(5, MSEC)
+
+# add a small delay to make sure we don't print in the middle of the REPL header
+wait(200, MSEC)
+# clear the console to make sure we don't have the REPL in the console
+print("\033[2J")
+
+#endregion VEXcode Generated Robot Configuration
+# global variable for controlling program state
+myVariable = 0
+
+# Function to execute when the program starts
+def when_started1():
+    global myVariable
+    brake_type = False  #whether or not to brake at the end
+    condition = False
+    brain.screen.print("Press the bumper on top to start.")  # Display the start message
+    
+    # Wait for the bumper to be pressed
+    while not bumper_b.pressing():
+        wait(5, MSEC)
+    
+    brain.screen.print("Starting...")
+    wait(0.5, SECONDS) 
+    
+    # Move motors
+    motor_1.spin_for(-1440, DEGREES, 40, PERCENT, False)
+    motor_2.spin_for(1440 , DEGREES, 40, PERCENT, False)
+    while not condition: limit_switch_a.pressing()
+    pass
+    
+    # Wait for the limit switch to be pressed
+    while not limit_switch_a.pressing():
+        wait(5, MSEC)
+
+def onevent_limit_switch_a_pressed_0(condition):
+    global myVariable
+    motor_1.stop()  #stop motor 1
+    motor_2.stop()  #stop motor 2
+    wait(5, MSEC)  #wait 5 milliseconds
+    
+    # Spin motors
+    motor_1.spin_for(1440, DEGREES, 40, PERCENT, False)
+    motor_2.spin_for(720 , DEGREES, 5, PERCENT, False)
+    while not condition: bumper_c.pressing()
+    pass
+
+    # Wait for the bumper to be pressed
+    while not bumper_c.pressing():
+        wait(5, MSEC)
+
+    motor_1.stop()
+    motor_2.stop()
+    #Event handler
+    limit_switch_a.pressed(onevent_limit_switch_a_pressed_0)
+
+def onevent_bumper_c_pressed_0():
+    # Event handler
+    bumper_c.pressed(onevent_bumper_c_pressed_0)
+    # stop the program once the bumper is pressed
+    brain.program_stop()
+    # adding a small delay to ensure the event is correctly registered
+    wait(15, MSEC)
+
+when_started1()
