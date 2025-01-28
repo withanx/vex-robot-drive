@@ -1,56 +1,43 @@
 #region VEXcode Generated Robot Configuration
 from vex import *
-import urandom
 
 # Brain should be defined by default
-brain = Brain()
+brain=Brain()
 
 # Robot configuration code
-motor_1 = Motor(Ports.PORT1, GearSetting.RATIO_36_1, False)
-motor_2 = Motor(Ports.PORT2, GearSetting.RATIO_36_1, True)
 limit_switch_a = Limit(brain.three_wire_port.a)
-bumper_b = Bumper(brain.three_wire_port.b)  # Bumper used to detect wall
-bumper_c = Bumper(brain.three_wire_port.c)
+motor_1 = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)
+motor_2 = Motor(Ports.PORT2, GearSetting.RATIO_18_1, True)
+bumper_b = Bumper(brain.three_wire_port.b)
 
 # wait for rotation sensor to fully initialize
 wait(30, MSEC)
 
-# Make random actually random
-def initializeRandomSeed():
-    wait(100, MSEC)
-    random = brain.battery.voltage(MV) + brain.battery.current(CurrentUnits.AMP) * 100 + brain.timer.system_high_res()
-    urandom.seed(int(random))
-
-# Set random seed
-initializeRandomSeed()
-
-def play_vexcode_sound(sound_name):
-    print("VEXPlaySound:" + sound_name)
-    wait(5, MSEC)
-
+# add a small delay to make sure we don't print in the middle of the REPL header
 wait(200, MSEC)
+# clear the console to make sure we don't have the REPL in the console
 print("\033[2J")
-#endregion VEXcode Generated Robot Configuration
+
 
 # global variable for controlling program state
 myVariable = 0
 
-# Function to drive straight for a given distance
+
 def drive_straight():
-    motor_1.spin_for(720, DEGREES, 40, PERCENT, False)  # Move forward 1440 degrees
+    motor_1.spin_for(720, DEGREES, 40, PERCENT, False)  # Move forward
     motor_2.spin_for(720, DEGREES, 40, PERCENT, False)
     wait(1, SECONDS)
 
-# Function to back up a bit (reverse a small distance)
+
 def back_up():
-    motor_1.spin_for(-180, DEGREES, 65, PERCENT, False)  # Move backward 720 degrees
-    motor_2.spin_for(-180, DEGREES, 65, PERCENT, False)
+    motor_1.spin_for(-240, DEGREES, 65, PERCENT, False)  # Move backward
+    motor_2.spin_for(-240, DEGREES, 65, PERCENT, False)
     wait(2, SECONDS)
 
-# Function to turn 180 degrees
+
 def turn_180():
-    motor_1.spin_for(360, DEGREES, 40, PERCENT, False)   # Turn 180 degrees right
-    motor_2.spin_for(-360, DEGREES, 80, PERCENT, False)
+    motor_1.spin_for(360, DEGREES, 30, PERCENT, False)   # Turn
+    motor_2.spin_for(-540, DEGREES, 85, PERCENT, False)
     wait(1, SECONDS)
 
 # Function to execute when the program starts
@@ -69,6 +56,7 @@ def when_started1():
     
     # Drive forward until bumper is pressed
     drive_straight()
+    wait(1, SECONDS)
 
     # Wait for the bumper to be pressed (indicating wall collision)
     while not limit_switch_a.pressing():
@@ -76,10 +64,12 @@ def when_started1():
     
     # Once the bumper is pressed, back up a bit
     back_up()
+    wait(1, SECONDS)
 
     # Then turn 180 degrees
     turn_180()
-
+    wait(1, SECONDS)
+       
     brain.screen.print("Finished!")
     wait(2, SECONDS)  # Pause before stopping
 
