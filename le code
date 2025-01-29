@@ -4,74 +4,73 @@ from vex import *
 # Brain should be defined by default
 brain=Brain()
 
-# Robot configuration code
-limit_switch_a = Limit(brain.three_wire_port.a)
+#config
 motor_1 = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)
 motor_2 = Motor(Ports.PORT2, GearSetting.RATIO_18_1, True)
-bumper_b = Bumper(brain.three_wire_port.b)
+bumper_c = Bumper(brain.three_wire_port.c)
+range_finder_a = Sonar(brain.three_wire_port.a)
 
-# wait for rotation sensor to fully initialize
+# Wait for rotation sensor to fully initialize
 wait(30, MSEC)
 
-# add a small delay to make sure we don't print in the middle of the REPL header
+# Add a small delay to make sure we don't print in the middle of the REPL header
 wait(200, MSEC)
-# clear the console to make sure we don't have the REPL in the console
+# Clear the console to make sure we don't have the REPL in the console
 print("\033[2J")
 
-
-# global variable for controlling program state
+# global variable
 myVariable = 0
 
+def turn_wall():
+    motor_1.spin(FORWARD, 35, PERCENT, False)   # Turn
+    motor_2.spin(REVERSE, 90, PERCENT, False)
+    wait(1, SECONDS)  # Wait for the turn to complete
+    motor_1.stop()
+    motor_2.stop()
+    wait(0.5, SECONDS)  # small delay before continuing
 
-def drive_straight():
-    motor_1.spin_for(720, DEGREES, 40, PERCENT, False)  # Move forward
-    motor_2.spin_for(720, DEGREES, 40, PERCENT, False)
-    wait(1, SECONDS)
+def drive_indef():
+    # Spin motors indefinitely
+    motor_1.spin(FORWARD, 40, PERCENT)
+    motor_2.spin(FORWARD, 40, PERCENT)
 
+def drive_until():
+    drive_indef()
 
-def back_up():
-    motor_1.spin_for(-240, DEGREES, 65, PERCENT, False)  # Move backward
-    motor_2.spin_for(-240, DEGREES, 65, PERCENT, False)
-    wait(2, SECONDS)
+    while True:
+        # Read distance
+        distance = range_finder_a.distance(MM)
+        
+        #check if the distance is less than or equal to 18 in
+        if distance <= 508:
+            brain.screen.print("Wall detected! Turning...")
+            turn_wall()  # Turn when wall is detected
+            wait(1, SECONDS) 
+        else:
+            brain.screen.print("No wall detected. Waiting...")
+            motor_1.stop()
+            motor_2.stop()  
+            wait(2, SECONDS)  
 
+            # restart after waiting
+            drive_indef()
 
-def turn_180():
-    motor_1.spin_for(360, DEGREES, 30, PERCENT, False)   # Turn
-    motor_2.spin_for(-540, DEGREES, 85, PERCENT, False)
-    wait(1, SECONDS)
+        wait(100, MSEC)  # Small delay to prevent tight loop, still checks sensor
 
-# Function to execute when the program starts
+# start program
 def when_started1():
     global myVariable
-    brake_type = False  # Whether or not to brake at the end
     condition = False
-    brain.screen.print("Press the bumper on top to start.")  # Display the start message
+    brain.screen.print("Press the bumper to start.")  # Display the start message
     
-    # Wait for the bumper to be pressed to start
-    while not bumper_b.pressing():
-        wait(5, MSEC)
+    while not bumper_c.pressing():
+        wait(5, MSEC)  # Keep checking for the bumper press
     
     brain.screen.print("Starting...")
-    wait(0.5, SECONDS)
-    
-    # Drive forward until bumper is pressed
-    drive_straight()
-    wait(1, SECONDS)
 
-    # Wait for the bumper to be pressed (indicating wall collision)
-    while not limit_switch_a.pressing():
-        wait(1, SECONDS)
-    
-    # Once the bumper is pressed, back up a bit
-    back_up()
-    wait(1, SECONDS)
+    # start the driving logic
+    drive_until()
 
-    # Then turn 180 degrees
-    turn_180()
-    wait(1, SECONDS)
-       
     brain.screen.print("Finished!")
     wait(2, SECONDS)  # Pause before stopping
-
-# Call when_started1 function to start the program
 when_started1()
